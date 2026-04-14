@@ -248,6 +248,69 @@ function EmptyState() {
   )
 }
 
+const TYPE_CONFIG = {
+  travaux: { label: 'Travaux', bg: '#F9A825', text: '#5D3900' },
+  incident: { label: 'Incident', bg: '#C62828', text: '#ffffff' },
+  deviation: { label: 'Déviation', bg: '#6A1B9A', text: '#ffffff' },
+  autre: { label: 'Autre', bg: '#757575', text: '#ffffff' },
+}
+
+const TRANSPORT_CONFIG = {
+  tram: { bg: '#003189', text: '#ffffff' },
+  bus: { bg: '#2E7D32', text: '#ffffff' },
+  navibus: { bg: '#E65100', text: '#ffffff' },
+}
+
+function TypeBadge({ type }) {
+  const cfg = TYPE_CONFIG[type] ?? TYPE_CONFIG.autre
+  return (
+    <span
+      className="text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide"
+      style={{ backgroundColor: cfg.bg, color: cfg.text }}
+    >
+      {cfg.label}
+    </span>
+  )
+}
+
+function LineBadge({ line, transport }) {
+  const cfg = TRANSPORT_CONFIG[transport] ?? TRANSPORT_CONFIG.bus
+  return (
+    <span
+      className="text-xs font-bold px-2 py-0.5 rounded-full"
+      style={{ backgroundColor: cfg.bg, color: cfg.text }}
+    >
+      {line}
+    </span>
+  )
+}
+
+function DisruptionCard({ disruption }) {
+  const { type, transport, lines, title, description, startDate, endDate } = disruption
+  return (
+    <div className="rounded-lg border border-gray-100 hover:border-gray-200 p-4 transition-colors">
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        <TypeBadge type={type} />
+        {lines.map(line => (
+          <LineBadge key={line} line={line} transport={transport} />
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 text-sm mb-1">{title}</h3>
+      {description && (
+        <p className="text-xs text-gray-500 mb-2 line-clamp-2">{description}</p>
+      )}
+      <div className="flex items-center gap-1 text-xs text-gray-400">
+        <svg aria-hidden="true" focusable="false" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Du {formatDate(startDate)}</span>
+        {endDate && <span>au {formatDate(endDate)}</span>}
+      </div>
+    </div>
+  )
+}
+
 // ─── Hook de fetch ────────────────────────────────────────────────────────────
 
 const API_URL =
@@ -321,7 +384,11 @@ export default function NaolibWidget() {
       ) : filtered.length === 0 ? (
         <EmptyState />
       ) : (
-        <p className="text-sm text-gray-400">{filtered.length} perturbation(s) — DisruptionCards à venir</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map(d => (
+            <DisruptionCard key={d.id} disruption={d} />
+          ))}
+        </div>
       )}
     </div>
   )
