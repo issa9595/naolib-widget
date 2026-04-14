@@ -77,6 +77,8 @@ export function normalizeRecord(record) {
 
   const title = fields.intitule || fields.title || fields.titre || lines.join(', ') || 'Perturbation'
 
+  const isFinished = endDate ? new Date(endDate) < new Date() : false
+
   return {
     id: record.code || record.recordid || record.id || `${title}-${startDate}`,
     type: normalizeType(fields.type || fields.typeevenement || fields.intitule || ''),
@@ -86,6 +88,7 @@ export function normalizeRecord(record) {
     description: fields.resume || fields.description || '',
     startDate,
     endDate,
+    isFinished,
   }
 }
 
@@ -120,7 +123,7 @@ function Header({ lastUpdate, onRefresh, loading }) {
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
-        <span style={{ color: '#003189' }} className="text-xl font-bold">État du réseau</span>
+        <span style={{ color: '#002300' }} className="text-xl font-bold">État du réseau</span>
       </div>
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-400">
@@ -151,29 +154,36 @@ function Header({ lastUpdate, onRefresh, loading }) {
 const STATUS_CONFIG = {
   normal: {
     label: 'Trafic normal',
-    bg: 'bg-green-100',
-    text: 'text-green-800',
-    dot: 'bg-green-500',
+    bg: '#f0ffe6',
+    text: '#002300',
+    dot: '#78d700',
   },
   perturbed: {
     label: 'Réseau perturbé',
-    bg: 'bg-orange-100',
-    text: 'text-orange-800',
-    dot: 'bg-orange-500',
+    bg: '#fff4e6',
+    text: '#7a3a00',
+    dot: '#ff8c12',
   },
   heavily_perturbed: {
     label: 'Réseau fortement perturbé',
-    bg: 'bg-red-100',
-    text: 'text-red-800',
-    dot: 'bg-red-500',
+    bg: '#ffeaea',
+    text: '#7a0000',
+    dot: '#e53935',
   },
 }
 
 function GlobalStatus({ status }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.normal
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${cfg.bg} ${cfg.text} mb-4 text-sm font-medium`}>
-      <span aria-hidden="true" className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
+    <div
+      className="flex items-center gap-2 px-3 py-2 rounded-lg mb-4 text-sm font-medium"
+      style={{ backgroundColor: cfg.bg, color: cfg.text }}
+    >
+      <span
+        aria-hidden="true"
+        className="w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: cfg.dot }}
+      />
       {cfg.label}
     </div>
   )
@@ -191,7 +201,7 @@ function ErrorState({ onRetry }) {
       <button
         onClick={onRetry}
         className="mt-1 px-4 py-1.5 rounded-full text-sm font-medium text-white transition-colors hover:opacity-90"
-        style={{ backgroundColor: '#003189' }}
+        style={{ backgroundColor: '#002300' }}
       >
         Réessayer
       </button>
@@ -218,7 +228,7 @@ function FilterBar({ active, onChange }) {
               ? 'text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
-          style={active === f.value ? { backgroundColor: '#003189' } : {}}
+          style={active === f.value ? { backgroundColor: '#002300' } : {}}
           aria-pressed={active === f.value}
         >
           {f.label}
@@ -253,27 +263,28 @@ function EmptyState({ filter }) {
     ? 'Ce type de transport circule normalement'
     : 'Aucune perturbation en cours'
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-green-700 bg-green-50 rounded-xl">
+    <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: '#f0ffe6', color: '#002300' }}>
       <svg aria-hidden="true" focusable="false" className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <p className="font-semibold text-base">{title}</p>
-      <p className="text-sm text-green-600 mt-1">{subtitle}</p>
+      <p className="text-sm mt-1" style={{ color: '#4a7a00' }}>{subtitle}</p>
     </div>
   )
 }
 
 const TYPE_CONFIG = {
-  travaux: { label: 'Travaux', bg: '#F9A825', text: '#5D3900' },
-  incident: { label: 'Incident', bg: '#C62828', text: '#ffffff' },
-  deviation: { label: 'Déviation', bg: '#6A1B9A', text: '#ffffff' },
+  travaux: { label: 'Travaux', bg: '#e8c500', text: '#002300' },
+  incident: { label: 'Incident', bg: '#ff8c12', text: '#ffffff' },
+  deviation: { label: 'Déviation', bg: '#8c8cff', text: '#002300' },
   autre: { label: 'Autre', bg: '#757575', text: '#ffffff' },
+  termine: { label: 'Terminé', bg: '#78d700', text: '#002300' },
 }
 
 const TRANSPORT_CONFIG = {
-  tram: { bg: '#003189', text: '#ffffff' },
-  bus: { bg: '#2E7D32', text: '#ffffff' },
-  navibus: { bg: '#E65100', text: '#ffffff' },
+  tram: { bg: '#002300', text: '#ffffff' },
+  bus: { bg: '#78d700', text: '#002300' },
+  navibus: { bg: '#73beff', text: '#002300' },
 }
 
 function TypeBadge({ type }) {
@@ -301,11 +312,11 @@ function LineBadge({ line, transport }) {
 }
 
 function DisruptionCard({ disruption }) {
-  const { type, transport, lines, title, description, startDate, endDate } = disruption
+  const { type, transport, lines, title, description, startDate, endDate, isFinished } = disruption
   return (
-    <div className="rounded-lg border border-gray-100 hover:border-gray-200 p-4 transition-colors">
+    <div className={`rounded-lg border p-4 transition-colors ${isFinished ? 'border-gray-100 bg-gray-50 opacity-75' : 'border-gray-100 hover:border-gray-200'}`}>
       <div className="flex items-center gap-2 flex-wrap mb-2">
-        <TypeBadge type={type} />
+        {isFinished ? <TypeBadge type="termine" /> : <TypeBadge type={type} />}
         {lines.map(line => (
           <LineBadge key={line} line={line} transport={transport} />
         ))}
@@ -350,7 +361,18 @@ function useFetch() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()
       if (controller.signal.aborted) return
-      setData((json.results || []).map(normalizeRecord))
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const records = (json.results || [])
+        .map(normalizeRecord)
+        .filter(r => !r.startDate || new Date(r.startDate) >= thirtyDaysAgo)
+      const seen = new Set()
+      const deduped = records.filter(r => {
+        if (seen.has(r.id)) return false
+        seen.add(r.id)
+        return true
+      })
+      setData(deduped)
     } catch (err) {
       if (err.name === 'AbortError') return
       if (controller.signal.aborted) return
@@ -382,7 +404,7 @@ export default function NaolibWidget() {
   const [filter, setFilter] = useState('all')
   const { data, loading, error, lastUpdate, refresh } = useFetch()
   const filtered = filterDisruptions(data, filter)
-  const status = getNetworkStatus(filtered)
+  const status = getNetworkStatus(data)
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 max-w-2xl mx-auto font-sans">
