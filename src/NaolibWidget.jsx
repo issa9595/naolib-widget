@@ -136,6 +136,8 @@ function Header({ lastUpdate, onRefresh, loading }) {
           aria-label="Rafraîchir les données"
         >
           <svg
+            aria-hidden="true"
+            focusable="false"
             className={`w-4 h-4 text-gray-500 ${loading ? 'animate-spin' : ''}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor"
           >
@@ -170,10 +172,10 @@ const STATUS_CONFIG = {
 }
 
 function GlobalStatus({ status }) {
-  const cfg = STATUS_CONFIG[status]
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.normal
   return (
     <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${cfg.bg} ${cfg.text} mb-4 text-sm font-medium`}>
-      <span className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
+      <span aria-hidden="true" className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
       {cfg.label}
     </div>
   )
@@ -181,8 +183,8 @@ function GlobalStatus({ status }) {
 
 function MockBanner() {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 text-xs text-yellow-700">
-      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div role="alert" className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg mb-4 text-xs text-yellow-700">
+      <svg aria-hidden="true" focusable="false" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
