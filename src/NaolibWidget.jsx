@@ -212,15 +212,15 @@ const STATUS_CONFIG = {
   },
   perturbed: {
     label: 'Réseau perturbé',
-    bg: '#fff4e6',
-    text: '#7a3a00',
-    dot: '#ff8c12',
+    bg: '#fffbe6',
+    text: '#5a4a00',
+    dot: '#e8c500',
   },
   heavily_perturbed: {
     label: 'Réseau fortement perturbé',
-    bg: '#ffeaea',
-    text: '#7a0000',
-    dot: '#e53935',
+    bg: '#fff4e6',
+    text: '#7a3a00',
+    dot: '#ff8c12',
   },
 }
 
@@ -322,6 +322,24 @@ function EmptyState({ filter }) {
       <p className="font-semibold text-base">{title}</p>
       <p className="text-sm mt-1" style={{ color: '#4a7a00' }}>{subtitle}</p>
     </div>
+  )
+}
+
+const CRITICALITY_CONFIG = {
+  critique: { label: 'CRITIQUE', bg: '#ff8c12', text: '#ffffff' },
+  majeure:  { label: 'MAJEURE',  bg: '#e8c500', text: '#002300' },
+  mineure:  { label: 'MINEURE',  bg: '#78d700', text: '#002300' },
+}
+
+function CriticalityBadge({ criticality }) {
+  const cfg = CRITICALITY_CONFIG[criticality] ?? CRITICALITY_CONFIG.mineure
+  return (
+    <span
+      className="text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide"
+      style={{ backgroundColor: cfg.bg, color: cfg.text }}
+    >
+      {cfg.label}
+    </span>
   )
 }
 
