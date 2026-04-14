@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { RefreshCw, Calendar, CheckCircle, AlertTriangle, ChevronDown, Star } from 'lucide-react'
 
 // ─── Fonctions utilitaires pures ──────────────────────────────────────────────
 
@@ -188,15 +189,7 @@ function Header({ lastUpdate, onRefresh, loading }) {
           title="Rafraîchir"
           aria-label="Rafraîchir les données"
         >
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            className={`w-4 h-4 text-gray-500 ${loading ? 'animate-spin' : ''}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
     </div>
@@ -244,10 +237,7 @@ function GlobalStatus({ status }) {
 function ErrorState({ onRetry }) {
   return (
     <div role="alert" className="flex flex-col items-center justify-center py-10 text-red-700 bg-red-50 rounded-xl gap-3">
-      <svg aria-hidden="true" focusable="false" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-      </svg>
+      <AlertTriangle className="w-10 h-10" />
       <p className="font-semibold text-base">Impossible de charger les données</p>
       <p className="text-sm text-red-500">L'API Naolib est momentanément indisponible.</p>
       <button
@@ -369,9 +359,7 @@ function EmptyState({ filter }) {
     : 'Aucune perturbation en cours'
   return (
     <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ backgroundColor: '#f0ffe6', color: '#002300' }}>
-      <svg aria-hidden="true" focusable="false" className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+      <CheckCircle className="w-10 h-10 mb-3" />
       <p className="font-semibold text-base">{title}</p>
       <p className="text-sm mt-1" style={{ color: '#4a7a00' }}>{subtitle}</p>
     </div>
@@ -453,20 +441,19 @@ function DisruptionCard({ disruption, isExpanded, onToggle, isFavorite, onFavori
         <span className="flex-1 font-semibold text-gray-900 text-sm min-w-0 truncate">{title}</span>
         <button
           onClick={e => { e.stopPropagation(); onFavoriteToggle() }}
-          className="ml-auto shrink-0 text-base leading-none hover:scale-110 transition-transform"
+          className="ml-auto shrink-0 hover:scale-110 transition-transform"
           aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
-          {isFavorite ? '★' : '☆'}
+          <Star
+            className="w-4 h-4"
+            style={{ color: isFavorite ? '#e8c500' : '#d1d5db', fill: isFavorite ? '#e8c500' : 'none' }}
+          />
         </button>
-        <svg
+        <ChevronDown
           aria-hidden="true"
-          focusable="false"
           className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        />
       </div>
 
       {/* Contenu déplié */}
@@ -476,10 +463,7 @@ function DisruptionCard({ disruption, isExpanded, onToggle, isFavorite, onFavori
             <p className="text-xs text-gray-500 mb-2">{description}</p>
           )}
           <div className="flex items-center gap-1 text-xs text-gray-400">
-            <svg aria-hidden="true" focusable="false" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <Calendar aria-hidden="true" className="w-3 h-3" />
             <span>Du {formatDate(startDate)}</span>
             {endDate && <span>au {formatDate(endDate)}</span>}
           </div>
