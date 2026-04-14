@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { RefreshCw, Calendar, CheckCircle, AlertTriangle, ChevronDown, Star } from 'lucide-react'
+import { RefreshCw, Calendar, CheckCircle, AlertTriangle, ChevronDown, Star, Search } from 'lucide-react'
 
 // ─── Fonctions utilitaires pures ──────────────────────────────────────────────
 
@@ -114,7 +114,7 @@ export function filterDisruptions(disruptions, filter) {
 
 const CRIT_ORDER = { critique: 0, majeure: 1, mineure: 2 }
 
-export function applyFilters(disruptions, { transport = 'all', status = 'all', duration = 'all', favorites = null } = {}, now = new Date()) {
+export function applyFilters(disruptions, { transport = 'all', status = 'all', duration = 'all', favorites = null, search = '' } = {}, now = new Date()) {
   let result = transport === 'all'
     ? disruptions
     : disruptions.filter(d => d.transport === transport)
@@ -149,6 +149,15 @@ export function applyFilters(disruptions, { transport = 'all', status = 'all', d
 
   if (favorites && favorites.size > 0) {
     result = result.filter(d => d.lines.some(l => favorites.has(l)))
+  }
+
+  if (search.trim()) {
+    const q = search.trim().toLowerCase()
+    result = result.filter(d =>
+      d.title.toLowerCase().includes(q) ||
+      d.description.toLowerCase().includes(q) ||
+      d.lines.some(l => l.toLowerCase().includes(q))
+    )
   }
 
   return [...result].sort((a, b) =>
@@ -263,6 +272,21 @@ const DROPDOWN_CLASS = [
   'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer',
   'focus:outline-none',
 ].join(' ')
+
+function SearchBar({ value, onChange }) {
+  return (
+    <div className="relative mb-3">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <input
+        type="search"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="Rechercher une ligne, une perturbation…"
+        className="w-full pl-9 pr-4 py-2 text-sm rounded-full border border-gray-200 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors"
+      />
+    </div>
+  )
+}
 
 function FilterBar({
   active, onChange,
@@ -565,6 +589,7 @@ export default function NaolibWidget() {
   const [filterFavorites, setFilterFavorites] = useState(false)
   const [favorites, setFavorites] = useState(() => loadFavorites())
   const [expandedId, setExpandedId] = useState(null)
+  const [search, setSearch] = useState('')
 
   const { data, loading, error, lastUpdate, refresh } = useFetch()
 
@@ -573,6 +598,7 @@ export default function NaolibWidget() {
     status: filterStatus,
     duration: filterDuration,
     favorites: filterFavorites ? favorites : null,
+    search,
   })
 
   const status = getNetworkStatus(data)
@@ -595,6 +621,7 @@ export default function NaolibWidget() {
     <div className="bg-white rounded-xl shadow-md p-4 max-w-2xl mx-auto font-sans">
       <Header lastUpdate={lastUpdate} onRefresh={refresh} loading={loading} />
       <GlobalStatus status={status} />
+      <SearchBar value={search} onChange={setSearch} />
       <FilterBar
         active={filter}
         onChange={setFilter}
