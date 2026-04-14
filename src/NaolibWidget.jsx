@@ -268,24 +268,77 @@ const FILTERS = [
   { value: 'navibus', label: 'Navibus' },
 ]
 
-function FilterBar({ active, onChange }) {
+const DROPDOWN_CLASS = [
+  'px-3 py-1 rounded-full text-sm font-medium border border-gray-200',
+  'bg-white text-gray-600 hover:bg-gray-50 cursor-pointer',
+  'focus:outline-none',
+].join(' ')
+
+function FilterBar({
+  active, onChange,
+  filterStatus, onStatusChange,
+  filterDuration, onDurationChange,
+  filterFavorites, onFavoritesChange,
+}) {
   return (
-    <div className="flex gap-2 flex-wrap mb-4" role="group" aria-label="Filtrer par type de transport">
-      {FILTERS.map(f => (
+    <div className="mb-4 space-y-2">
+      {/* Rangée 1 : transport */}
+      <div className="flex gap-2 flex-wrap" role="group" aria-label="Filtrer par type de transport">
+        {FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => onChange(f.value)}
+            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+              active === f.value
+                ? 'text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+            style={active === f.value ? { backgroundColor: '#002300' } : {}}
+            aria-pressed={active === f.value}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Rangée 2 : statut, durée, favoris */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <select
+          value={filterStatus}
+          onChange={e => onStatusChange(e.target.value)}
+          className={DROPDOWN_CLASS}
+          aria-label="Filtrer par statut"
+        >
+          <option value="all">Statut</option>
+          <option value="en_cours">En cours</option>
+          <option value="a_venir">À venir</option>
+        </select>
+
+        <select
+          value={filterDuration}
+          onChange={e => onDurationChange(e.target.value)}
+          className={DROPDOWN_CLASS}
+          aria-label="Filtrer par durée"
+        >
+          <option value="all">Durée</option>
+          <option value="courte">Courte (&lt; 2h)</option>
+          <option value="longue">Longue (&gt; 2h)</option>
+          <option value="journee">Toute la journée</option>
+        </select>
+
         <button
-          key={f.value}
-          onClick={() => onChange(f.value)}
+          onClick={() => onFavoritesChange(!filterFavorites)}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-            active === f.value
+            filterFavorites
               ? 'text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
-          style={active === f.value ? { backgroundColor: '#002300' } : {}}
-          aria-pressed={active === f.value}
+          style={filterFavorites ? { backgroundColor: '#002300' } : {}}
+          aria-pressed={filterFavorites}
         >
-          {f.label}
+          ⭐ Mes lignes
         </button>
-      ))}
+      </div>
     </div>
   )
 }
