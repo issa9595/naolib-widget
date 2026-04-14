@@ -111,6 +111,50 @@ export function filterDisruptions(disruptions, filter) {
   return disruptions.filter(d => d.transport === filter)
 }
 
+const CRIT_ORDER = { critique: 0, majeure: 1, mineure: 2 }
+
+export function applyFilters(disruptions, { transport = 'all', status = 'all', duration = 'all', favorites = null } = {}, now = new Date()) {
+  let result = transport === 'all'
+    ? disruptions
+    : disruptions.filter(d => d.transport === transport)
+
+  if (status === 'en_cours') {
+    result = result.filter(d => {
+      if (!d.startDate) return true
+      const start = new Date(d.startDate)
+      const end = d.endDate ? new Date(d.endDate) : null
+      return start <= now && (!end || end > now)
+    })
+  } else if (status === 'a_venir') {
+    result = result.filter(d => d.startDate && new Date(d.startDate) > now)
+  }
+
+  if (duration === 'courte') {
+    result = result.filter(d => {
+      if (!d.startDate || !d.endDate) return false
+      return new Date(d.endDate) - new Date(d.startDate) < 2 * 3600 * 1000
+    })
+  } else if (duration === 'longue') {
+    result = result.filter(d => {
+      if (!d.startDate || !d.endDate) return false
+      return new Date(d.endDate) - new Date(d.startDate) >= 2 * 3600 * 1000
+    })
+  } else if (duration === 'journee') {
+    result = result.filter(d => {
+      if (!d.startDate || !d.endDate) return true
+      return new Date(d.endDate) - new Date(d.startDate) >= 8 * 3600 * 1000
+    })
+  }
+
+  if (favorites && favorites.size > 0) {
+    result = result.filter(d => d.lines.some(l => favorites.has(l)))
+  }
+
+  return [...result].sort((a, b) =>
+    (CRIT_ORDER[a.criticality] ?? 2) - (CRIT_ORDER[b.criticality] ?? 2)
+  )
+}
+
 // ─── Helpers de formatage ─────────────────────────────────────────────────────
 
 function formatTime(date) {
