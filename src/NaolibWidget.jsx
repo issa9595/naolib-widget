@@ -80,7 +80,7 @@ export function normalizeRecord(record) {
     : Array.isArray(linesRaw) ? linesRaw : []
 
   return {
-    id: record.recordid || record.id || 'unknown',
+    id: record.recordid || record.id || `${fields.title || fields.titre || 'unknown'}-${fields.startdate || fields.datedebut || ''}`,
     type: normalizeType(fields.type || fields.typeevenement || ''),
     transport: detectTransport(lines),
     lines,
@@ -236,14 +236,23 @@ function SkeletonCard() {
   )
 }
 
-function EmptyState() {
+const FILTER_LABELS = { tram: 'Tram', bus: 'Bus', navibus: 'Navibus' }
+
+function EmptyState({ filter }) {
+  const isFiltered = filter && filter !== 'all'
+  const title = isFiltered
+    ? `Aucune perturbation sur ${FILTER_LABELS[filter] || filter}`
+    : 'Trafic normal sur l\'ensemble du réseau'
+  const subtitle = isFiltered
+    ? 'Ce type de transport circule normalement'
+    : 'Aucune perturbation en cours'
   return (
     <div className="flex flex-col items-center justify-center py-10 text-green-700 bg-green-50 rounded-xl">
       <svg aria-hidden="true" focusable="false" className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <p className="font-semibold text-base">Trafic normal sur l'ensemble du réseau</p>
-      <p className="text-sm text-green-600 mt-1">Aucune perturbation en cours</p>
+      <p className="font-semibold text-base">{title}</p>
+      <p className="text-sm text-green-600 mt-1">{subtitle}</p>
     </div>
   )
 }
@@ -382,7 +391,7 @@ export default function NaolibWidget() {
           <SkeletonCard />
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState />
+        <EmptyState filter={filter} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(d => (
