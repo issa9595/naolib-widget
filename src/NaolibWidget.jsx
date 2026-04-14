@@ -552,17 +552,72 @@ function useFetch() {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
+const FAVORITES_KEY = 'naolib-favorites'
+
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY)
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveFavorites(set) {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...set]))
+  } catch {
+    // localStorage indisponible — silently ignore
+  }
+}
+
 export default function NaolibWidget() {
   const [filter, setFilter] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterDuration, setFilterDuration] = useState('all')
+  const [filterFavorites, setFilterFavorites] = useState(false)
+  const [favorites, setFavorites] = useState(() => loadFavorites())
+  const [expandedId, setExpandedId] = useState(null)
+
   const { data, loading, error, lastUpdate, refresh } = useFetch()
-  const filtered = filterDisruptions(data, filter)
+
+  const filtered = applyFilters(data, {
+    transport: filter,
+    status: filterStatus,
+    duration: filterDuration,
+    favorites: filterFavorites ? favorites : null,
+  })
+
   const status = getNetworkStatus(data)
+
+  function toggleFavorite(line) {
+    setFavorites(prev => {
+      const next = new Set(prev)
+      if (next.has(line)) next.delete(line)
+      else next.add(line)
+      saveFavorites(next)
+      return next
+    })
+  }
+
+  function toggleExpand(id) {
+    setExpandedId(prev => prev === id ? null : id)
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 max-w-2xl mx-auto font-sans">
       <Header lastUpdate={lastUpdate} onRefresh={refresh} loading={loading} />
       <GlobalStatus status={status} />
-      <FilterBar active={filter} onChange={setFilter} />
+      <FilterBar
+        active={filter}
+        onChange={setFilter}
+        filterStatus={filterStatus}
+        onStatusChange={setFilterStatus}
+        filterDuration={filterDuration}
+        onDurationChange={setFilterDuration}
+        filterFavorites={filterFavorites}
+        onFavoritesChange={setFilterFavorites}
+      />
       {loading ? (
         <div className="flex flex-col gap-3">
           <SkeletonCard />
@@ -576,7 +631,14 @@ export default function NaolibWidget() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(d => (
-            <DisruptionCard key={d.id} disruption={d} />
+            <DisruptionCard
+              key={d.id}
+              disruption={d}
+              isExpanded={expandedId === d.id}
+              onToggle={() => toggleExpand(d.id)}
+              isFavorite={d.lines.length > 0 && favorites.has(d.lines[0])}
+              onFavoriteToggle={() => d.lines.length > 0 && toggleFavorite(d.lines[0])}
+            />
           ))}
         </div>
       )}
