@@ -381,28 +381,57 @@ function LineBadge({ line, transport }) {
   )
 }
 
-function DisruptionCard({ disruption }) {
-  const { type, transport, lines, title, description, startDate, endDate, isFinished } = disruption
+function DisruptionCard({ disruption, isExpanded, onToggle, isFavorite, onFavoriteToggle }) {
+  const { type, transport, lines, title, description, startDate, endDate, isFinished, criticality } = disruption
   return (
-    <div className={`rounded-lg border p-4 transition-colors ${isFinished ? 'border-gray-100 bg-gray-50 opacity-75' : 'border-gray-100 hover:border-gray-200'}`}>
-      <div className="flex items-center gap-2 flex-wrap mb-2">
-        {isFinished ? <TypeBadge type="termine" /> : <TypeBadge type={type} />}
+    <div
+      className={`rounded-lg border p-4 transition-colors cursor-pointer ${
+        isFinished ? 'border-gray-100 bg-gray-50 opacity-75' : 'border-gray-100 hover:border-gray-200'
+      }`}
+      onClick={onToggle}
+    >
+      {/* Ligne compacte toujours visible */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <CriticalityBadge criticality={criticality} />
         {lines.map(line => (
           <LineBadge key={line} line={line} transport={transport} />
         ))}
-      </div>
-      <h3 className="font-semibold text-gray-900 text-sm mb-1">{title}</h3>
-      {description && (
-        <p className="text-xs text-gray-500 mb-2 line-clamp-2">{description}</p>
-      )}
-      <div className="flex items-center gap-1 text-xs text-gray-400">
-        <svg aria-hidden="true" focusable="false" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        {isFinished ? <TypeBadge type="termine" /> : <TypeBadge type={type} />}
+        <span className="flex-1 font-semibold text-gray-900 text-sm min-w-0 truncate">{title}</span>
+        <button
+          onClick={e => { e.stopPropagation(); onFavoriteToggle() }}
+          className="ml-auto shrink-0 text-base leading-none hover:scale-110 transition-transform"
+          aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        >
+          {isFavorite ? '★' : '☆'}
+        </button>
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-        <span>Du {formatDate(startDate)}</span>
-        {endDate && <span>au {formatDate(endDate)}</span>}
       </div>
+
+      {/* Contenu déplié */}
+      {isExpanded && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          {description && (
+            <p className="text-xs text-gray-500 mb-2">{description}</p>
+          )}
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            <svg aria-hidden="true" focusable="false" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Du {formatDate(startDate)}</span>
+            {endDate && <span>au {formatDate(endDate)}</span>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
