@@ -57,6 +57,29 @@ export const MOCK_DATA = [
 
 // ─── Fonctions utilitaires pures ──────────────────────────────────────────────
 
+// Parses real API "troncons" field e.g. "[TE1/1/-/-];[C6/2/-/-]" → ['TE1', 'C6']
+function parseTroncons(raw) {
+  if (!raw) return []
+  const matches = raw.match(/\[([^\]]+)\]/g) || []
+  return matches
+    .map(m => m.slice(1, -1).split('/')[0].trim())
+    .filter(c => c && c !== 'NC')
+}
+
+// Maps internal line codes to display names: TE1 → Tram 1, C1 → C1, etc.
+function lineCodeToDisplayName(code) {
+  if (code.startsWith('TE')) return `Tram ${code.slice(2)}`
+  return code
+}
+
+// Detects transport from real API line codes
+function detectTransportFromCodes(codes) {
+  if (codes.some(c => c.startsWith('TE'))) return 'tram'
+  if (codes.some(c => /^N\d*$/.test(c))) return 'navibus'
+  return 'bus'
+}
+
+// Fallback transport detection from display names (old/test format)
 function detectTransport(lines) {
   const joined = lines.join(' ').toLowerCase()
   if (joined.includes('tram')) return 'tram'
@@ -73,21 +96,51 @@ function normalizeType(raw) {
 }
 
 export function normalizeRecord(record) {
+  // Real API (ODS v2.1): flat record with `troncons`, `intitule`, `resume`, `date_debut`…
+  // Legacy/test format: may have nested `record.fields` with `lines`, `title`, `startdate`…
+  const isRealApi = !record.fields && record.troncons !== undefined
   const fields = record.fields || record
-  const linesRaw = fields.lines || fields.lignes || ''
-  const lines = typeof linesRaw === 'string'
-    ? linesRaw.split(',').map(l => l.trim()).filter(Boolean)
-    : Array.isArray(linesRaw) ? linesRaw : []
+
+  let lines, lineCodes
+  if (isRealApi) {
+    lineCodes = parseTroncons(fields.troncons)
+    lines = lineCodes.map(lineCodeToDisplayName)
+  } else {
+    lineCodes = []
+    const linesRaw = fields.lines || fields.lignes || ''
+    lines = typeof linesRaw === 'string'
+      ? linesRaw.split(',').map(l => l.trim()).filter(Boolean)
+      : Array.isArray(linesRaw) ? linesRaw : []
+  }
+
+  const transport = lineCodes.length > 0
+    ? detectTransportFromCodes(lineCodes)
+    : detectTransport(lines)
+
+  let startDate, endDate
+  if (isRealApi) {
+    startDate = fields.date_debut
+      ? `${fields.date_debut}T${fields.heure_debut || '00:00'}`
+      : ''
+    endDate = fields.date_fin
+      ? `${fields.date_fin}T${fields.heure_fin || '00:00'}`
+      : ''
+  } else {
+    startDate = fields.startdate || fields.datedebut || ''
+    endDate = fields.enddate || fields.datefin || ''
+  }
+
+  const title = fields.intitule || fields.title || fields.titre || lines.join(', ') || 'Perturbation'
 
   return {
-    id: record.recordid || record.id || `${fields.title || fields.titre || 'unknown'}-${fields.startdate || fields.datedebut || ''}`,
-    type: normalizeType(fields.type || fields.typeevenement || ''),
-    transport: detectTransport(lines),
+    id: record.code || record.recordid || record.id || `${title}-${startDate}`,
+    type: normalizeType(fields.type || fields.typeevenement || fields.intitule || ''),
+    transport,
     lines,
-    title: fields.title || fields.titre || 'Perturbation',
-    description: fields.description || '',
-    startDate: fields.startdate || fields.datedebut || '',
-    endDate: fields.enddate || fields.datefin || '',
+    title,
+    description: fields.resume || fields.description || '',
+    startDate,
+    endDate,
   }
 }
 
