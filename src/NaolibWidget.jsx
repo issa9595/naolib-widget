@@ -193,6 +193,61 @@ function MockBanner() {
   )
 }
 
+const FILTERS = [
+  { value: 'all', label: 'Tout' },
+  { value: 'tram', label: 'Tram' },
+  { value: 'bus', label: 'Bus' },
+  { value: 'navibus', label: 'Navibus' },
+]
+
+function FilterBar({ active, onChange }) {
+  return (
+    <div className="flex gap-2 flex-wrap mb-4" role="group" aria-label="Filtrer par type de transport">
+      {FILTERS.map(f => (
+        <button
+          key={f.value}
+          onClick={() => onChange(f.value)}
+          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+            active === f.value
+              ? 'text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+          style={active === f.value ? { backgroundColor: '#003189' } : {}}
+          aria-pressed={active === f.value}
+        >
+          {f.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-lg border border-gray-100 p-4 animate-pulse">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-5 w-16 bg-gray-200 rounded-full" />
+        <div className="h-5 w-12 bg-gray-200 rounded-full" />
+      </div>
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-full mb-1" />
+      <div className="h-3 bg-gray-100 rounded w-2/3" />
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 text-green-700 bg-green-50 rounded-xl">
+      <svg aria-hidden="true" focusable="false" className="w-10 h-10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p className="font-semibold text-base">Trafic normal sur l'ensemble du réseau</p>
+      <p className="text-sm text-green-600 mt-1">Aucune perturbation en cours</p>
+    </div>
+  )
+}
+
 // ─── Hook de fetch ────────────────────────────────────────────────────────────
 
 const API_URL =
@@ -256,7 +311,18 @@ export default function NaolibWidget() {
       <Header lastUpdate={lastUpdate} onRefresh={refresh} loading={loading} />
       {isMock && <MockBanner />}
       <GlobalStatus status={status} />
-      <p className="text-sm text-gray-400">{filtered.length} perturbation(s) — filtre: {filter}</p>
+      <FilterBar active={filter} onChange={setFilter} />
+      {loading ? (
+        <div className="flex flex-col gap-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <p className="text-sm text-gray-400">{filtered.length} perturbation(s) — DisruptionCards à venir</p>
+      )}
     </div>
   )
 }
