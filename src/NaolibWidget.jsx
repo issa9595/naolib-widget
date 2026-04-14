@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // ─── Données mock ────────────────────────────────────────────────────────────
 
@@ -112,31 +112,44 @@ function useFetch() {
   const [loading, setLoading] = useState(true)
   const [isMock, setIsMock] = useState(false)
   const [lastUpdate, setLastUpdate] = useState(null)
+  const abortRef = useRef(null)
 
-  async function fetchData() {
+  async function runFetch() {
+    if (abortRef.current) abortRef.current.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setLoading(true)
     try {
-      const res = await fetch(API_URL)
+      const res = await fetch(API_URL, { signal: controller.signal })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()
-      const normalized = (json.results || []).map(normalizeRecord)
-      setData(normalized)
+      if (controller.signal.aborted) return
+      setData((json.results || []).map(normalizeRecord))
       setIsMock(false)
-    } catch {
+    } catch (err) {
+      if (err.name === 'AbortError') return
+      if (controller.signal.aborted) return
       setData(MOCK_DATA)
       setIsMock(true)
     } finally {
-      setLoading(false)
-      setLastUpdate(new Date())
+      if (!controller.signal.aborted) {
+        setLoading(false)
+        setLastUpdate(new Date())
+      }
     }
   }
 
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 60_000)
-    return () => clearInterval(interval)
-  }, [])
+    runFetch()
+    const interval = setInterval(runFetch, 60_000)
+    return () => {
+      clearInterval(interval)
+      if (abortRef.current) abortRef.current.abort()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { data, loading, isMock, lastUpdate, refresh: fetchData }
+  return { data, loading, isMock, lastUpdate, refresh: runFetch }
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
