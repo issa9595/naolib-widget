@@ -68,7 +68,7 @@ function normalizeType(raw) {
   const t = (raw || '').toLowerCase()
   if (t.includes('trav')) return 'travaux'
   if (t.includes('inci') || t.includes('panne') || t.includes('pertub')) return 'incident'
-  if (t.includes('dév') || t.includes('dev')) return 'deviation'
+  if (t.includes('dév')) return 'deviation'
   return 'autre'
 }
 
@@ -80,7 +80,7 @@ export function normalizeRecord(record) {
     : Array.isArray(linesRaw) ? linesRaw : []
 
   return {
-    id: record.recordid || record.id || String(Math.random()),
+    id: record.recordid || record.id || 'unknown',
     type: normalizeType(fields.type || fields.typeevenement || ''),
     transport: detectTransport(lines),
     lines,

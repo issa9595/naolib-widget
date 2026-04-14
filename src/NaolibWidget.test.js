@@ -47,6 +47,28 @@ describe('normalizeRecord', () => {
     const record = { fields: { lines: 'C1', type: 'inconnu', title: 'Test' } }
     expect(normalizeRecord(record).type).toBe('autre')
   })
+
+  it('transport fallback = bus si lines est vide', () => {
+    const record = { fields: { lines: '', type: 'incident', title: 'Test' } }
+    expect(normalizeRecord(record).transport).toBe('bus')
+    expect(normalizeRecord(record).lines).toEqual([])
+  })
+
+  it('normalise un record plat (sans champ fields)', () => {
+    const record = {
+      id: 'flat-1',
+      lines: 'C1',
+      type: 'incident',
+      title: 'Incident bus',
+      description: 'Description',
+      startdate: '2026-04-14T10:00:00',
+      enddate: '2026-04-14T12:00:00',
+    }
+    const result = normalizeRecord(record)
+    expect(result.id).toBe('flat-1')
+    expect(result.transport).toBe('bus')
+    expect(result.title).toBe('Incident bus')
+  })
 })
 
 describe('getNetworkStatus', () => {
@@ -88,5 +110,9 @@ describe('filterDisruptions', () => {
     const result = filterDisruptions(MOCK_DATA, 'navibus')
     expect(result.every(d => d.transport === 'navibus')).toBe(true)
     expect(result).toHaveLength(1)
+  })
+
+  it('retourne tableau vide pour filtre inconnu', () => {
+    expect(filterDisruptions(MOCK_DATA, 'ferry')).toHaveLength(0)
   })
 })
