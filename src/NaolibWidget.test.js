@@ -119,6 +119,46 @@ describe('getNetworkStatus', () => {
   })
 })
 
+describe('normalizeRecord — criticality', () => {
+  it('criticality = critique pour type incident', () => {
+    const record = {
+      code: '1',
+      intitule: 'Incident ligne',
+      troncons: '[TE1/1/-/-]',
+      date_debut: '2026-04-14',
+      heure_debut: '08:00',
+    }
+    expect(normalizeRecord(record).criticality).toBe('critique')
+  })
+
+  it('criticality = majeure pour type travaux', () => {
+    const record = {
+      code: '2',
+      intitule: 'Travaux station',
+      troncons: '[C1/1/-/-]',
+      date_debut: '2026-04-14',
+      heure_debut: '08:00',
+    }
+    expect(normalizeRecord(record).criticality).toBe('majeure')
+  })
+
+  it('criticality = mineure pour type deviation', () => {
+    const record = {
+      code: '3',
+      intitule: 'Déviation ligne',
+      troncons: '[C6/1/-/-]',
+      date_debut: '2026-04-14',
+      heure_debut: '08:00',
+    }
+    expect(normalizeRecord(record).criticality).toBe('mineure')
+  })
+
+  it('criticality = mineure pour type autre', () => {
+    const record = { fields: { lines: 'C1', type: 'inconnu', title: 'Test' } }
+    expect(normalizeRecord(record).criticality).toBe('mineure')
+  })
+})
+
 describe('filterDisruptions', () => {
   const DATA = [makeTram('t1'), makeTram('t2'), makeBus('b1'), makeBus('b2'), makeNavibus('n1')]
 

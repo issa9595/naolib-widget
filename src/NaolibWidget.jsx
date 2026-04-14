@@ -32,6 +32,12 @@ function detectTransport(lines) {
   return 'bus'
 }
 
+function getCriticality(type) {
+  if (type === 'incident') return 'critique'
+  if (type === 'travaux') return 'majeure'
+  return 'mineure'
+}
+
 function normalizeType(raw) {
   const t = (raw || '').toLowerCase()
   if (t.includes('trav')) return 'travaux'
@@ -78,10 +84,11 @@ export function normalizeRecord(record) {
   const title = fields.intitule || fields.title || fields.titre || lines.join(', ') || 'Perturbation'
 
   const isFinished = endDate ? new Date(endDate) < new Date() : false
+  const type = normalizeType(fields.type || fields.typeevenement || fields.intitule || '')
 
   return {
     id: record.code || record.recordid || record.id || `${title}-${startDate}`,
-    type: normalizeType(fields.type || fields.typeevenement || fields.intitule || ''),
+    type,
     transport,
     lines,
     title,
@@ -89,6 +96,7 @@ export function normalizeRecord(record) {
     startDate,
     endDate,
     isFinished,
+    criticality: getCriticality(type),
   }
 }
 
