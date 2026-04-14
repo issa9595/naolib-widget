@@ -102,8 +102,51 @@ export function filterDisruptions(disruptions, filter) {
   return disruptions.filter(d => d.transport === filter)
 }
 
-// ─── Composant principal (placeholder) ───────────────────────────────────────
+// ─── Hook de fetch ────────────────────────────────────────────────────────────
+
+const API_URL =
+  'https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_info-trafic-tan-temps-reel/records?limit=20'
+
+function useFetch() {
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [isMock, setIsMock] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState(null)
+
+  async function fetchData() {
+    try {
+      const res = await fetch(API_URL)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      const normalized = (json.results || []).map(normalizeRecord)
+      setData(normalized)
+      setIsMock(false)
+    } catch {
+      setData(MOCK_DATA)
+      setIsMock(true)
+    } finally {
+      setLoading(false)
+      setLastUpdate(new Date())
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 60_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return { data, loading, isMock, lastUpdate, refresh: fetchData }
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function NaolibWidget() {
-  return <div>NaolibWidget</div>
+  const { data, loading, isMock, lastUpdate, refresh } = useFetch()
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-4 max-w-2xl mx-auto">
+      <p>Chargement: {loading ? 'oui' : 'non'} — {data.length} perturbations</p>
+    </div>
+  )
 }
