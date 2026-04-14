@@ -326,7 +326,10 @@ function FilterBar({
           style={filterFavorites ? { backgroundColor: '#002300' } : {}}
           aria-pressed={filterFavorites}
         >
-          ⭐ Mes lignes
+          <span className="flex items-center gap-1.5">
+            <Star className="w-3.5 h-3.5" style={{ fill: filterFavorites ? 'currentColor' : 'none' }} />
+            Mes lignes
+          </span>
         </button>
       </div>
     </div>
